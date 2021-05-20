@@ -2,7 +2,15 @@
   <div class="vue-root">
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Positions</h3> <span class="text-muted float-right"><transition name="slide-fade" mode="out-in"><div :key="positionsUpdatedAt">{{ positionsUpdatedAt }}</div></transition></span>
+        <h3 class="card-title">Positions</h3>
+        <span class="text-muted float-right">
+          <span class="text-dark">
+            {{ profit.currency|round(2) }}/<span class="text-muted">{{ profit.currencyProfit|round(2) }}</span>
+              <span v-bind:class="{ 'text-success': profit.profit >= 0, 'text-danger': profit.profit < 0 }">{{ profit.profit|round(2) }}</span>
+            (<span v-bind:class="{ 'text-success': profit.profitPercent >= 0, 'text-danger': profit.profitPercent < 0 }">{{ profit.profitPercent|round(2) }}%</span>)
+          </span>
+          <transition name="slide-fade" mode="out-in"><span :key="positionsUpdatedAt">{{ positionsUpdatedAt }}</span></transition>
+        </span>
       </div>
       <!-- /.card-header -->
       <div class="card-body">
@@ -136,7 +144,12 @@ module.exports = {
       positions: [],
       orders: [],
       positionsUpdatedAt: '',
-      ordersUpdatedAt: ''
+      ordersUpdatedAt: '',
+      profit: {
+        currency: 0,
+        currencyProfit: 0,
+        profit: 0,
+      },
     }
   },
   created: function() {
@@ -154,6 +167,13 @@ module.exports = {
 
       this.positions = data.positions || [];
       this.orders = data.orders || [];
+      this.profit = this.positions.reduce((acc, position) => {
+        acc.currency += (position.currency || 0)
+        acc.currencyProfit += (position.currencyProfit || 0)
+        return acc;
+      }, { currency: 0, currencyProfit: 0 });
+      this.profit.profit = this.profit.currencyProfit - this.profit.currency
+      this.profit.profitPercent = (this.profit.currencyProfit - this.profit.currency)*100/this.profit.currency
 
       this.positionsUpdatedAt = new Date().toLocaleTimeString();
       this.ordersUpdatedAt = new Date().toLocaleTimeString();
